@@ -7,6 +7,25 @@ on:
       - main
 
 jobs:
+  goreleaser:
+    name: Build with goreleaer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean --skip-publish --snapshot
+
   codechecks:
     name: Code checks
     runs-on: ubuntu-latest
