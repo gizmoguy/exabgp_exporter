@@ -88,7 +88,7 @@ jobs:
           trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
           script/test | tee ${TEST_RESULTS}/go-test.out
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: "/tmp/test-results"
 
@@ -132,6 +132,6 @@ jobs:
       - name: Stop docker container
         run: script/stop-docker
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: "/tmp/test-results"
