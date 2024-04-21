@@ -57,8 +57,8 @@ type Neighbor struct {
 		Peer  string `json:"peer"`
 	} `json:"address"`
 	ASN struct {
-		Local int `json:"local"`
-		Peer  int `json:"peer"`
+		Local uint32 `json:"local"`
+		Peer  uint32 `json:"peer"`
 	} `json:"asn"`
 	Direction    string      `json:"direction"`
 	State        string      `json:"state"`

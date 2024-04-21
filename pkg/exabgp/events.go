@@ -77,7 +77,7 @@ func (e *Event) setAnnouncements(ra *Announcements) {
 // Peer represents a neighbor and its state
 type Peer struct {
 	IP     string
-	ASN    int
+	ASN    uint32
 	State  string
 	Reason string
 }
@@ -85,7 +85,7 @@ type Peer struct {
 // Self represents the local bgp instance
 type Self struct {
 	IP  string
-	ASN int
+	ASN uint32
 }
 
 // Announcements represents all the bgp `announce` messages
