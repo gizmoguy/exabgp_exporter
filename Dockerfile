@@ -1,8 +1,8 @@
-FROM golang:alpine AS build-env
-
+FROM python:3.11-alpine AS python-env
 
 FROM golang:alpine
 ENV CGO_ENABLED 0
+ENV PYTHON_VERSION 3.11
 ENV EXABGP_VERSION 4.2.21
 ENV GOBGP_VERSION 3.23.0
 ENV S6_OVERLAY_VERSION 3.1.6.2
@@ -18,6 +18,9 @@ RUN mkfifo /exabgp/run/exabgp.out
 RUN chmod 666 /exabgp/run/exabgp.*
 RUN mkfifo /exabgp/exabgp.cmd
 RUN chmod 666 /exabgp/exabgp.cmd
+
+COPY --from=python-env /usr/local/ /usr/local/
+
 COPY docker/files/exabgp.conf /exabgp/etc/exabgp/exabgp.conf
 COPY docker/files/gobgp.yaml /gobgp/gobgp.yaml
 COPY docker/files/rsyslog.conf /etc/rsyslog.conf
@@ -45,15 +48,13 @@ COPY docker/exporter_invalid.sh /etc/services.d/exabgp_exporter_bad/run
 
 RUN apk add\
     bash \
-    py3-pip \
-    py3-setuptools \
     socat \
     curl \
     git \
     musl-dev \
     linux-headers \
-    python3-dev \
     gcc
+    libffi \
 
 # build binary
 ADD . /src
