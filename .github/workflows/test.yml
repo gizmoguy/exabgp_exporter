@@ -99,6 +99,7 @@ jobs:
     strategy:
       matrix:
         exabgp_version:
+          - "4.2.22"
           - "4.2.21"
           - "4.2.17"
           - "4.2.8"
