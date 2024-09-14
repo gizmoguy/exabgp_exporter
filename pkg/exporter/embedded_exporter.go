@@ -4,12 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/gizmoguy/exabgp_exporter/pkg/exabgp"
@@ -22,7 +21,7 @@ type EmbeddedExporter struct {
 	BaseExporter
 }
 
-func NewEmbeddedExporter(logger log.Logger) (*EmbeddedExporter, error) {
+func NewEmbeddedExporter(logger *slog.Logger) (*EmbeddedExporter, error) {
 	be := NewBaseExporter(logger)
 	be.up.Set(float64(1))
 
@@ -54,18 +53,14 @@ func (e *EmbeddedExporter) Run(reader *bufio.Reader) {
 		for {
 			line, _, err := reader.ReadLine()
 			if err != nil && err != io.EOF {
-				// nolint:errcheck
-				level.Error(e.BaseExporter.logger).Log(
-					"msg", "unknown error", "err", err,
-				)
+				e.BaseExporter.logger.Error("unknown error", "error", err.Error())
 				e.BaseExporter.parseFailures.Inc()
 				continue
 			}
 			evt, err := exabgp.ParseEvent(line)
 			if err != nil {
-				// nolint:errcheck
-				level.Error(e.BaseExporter.logger).Log(
-					"msg", "unable to parse line", "err", err, "line", line,
+				e.BaseExporter.logger.Error(
+					"unable to parse line", "error", err.Error(), "line", line,
 				)
 				e.BaseExporter.parseFailures.Inc()
 				continue
