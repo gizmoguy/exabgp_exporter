@@ -3,14 +3,13 @@ package exporter
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/gizmoguy/exabgp_exporter/pkg/exabgp/messages/text"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -28,7 +27,7 @@ type StandaloneExporter struct {
 }
 
 // NewStandaloneExporter returns an initialized TextExporter.
-func NewStandaloneExporter(exabgpcli string, exabgproot string, logger log.Logger) (*StandaloneExporter, error) {
+func NewStandaloneExporter(exabgpcli string, exabgproot string, logger *slog.Logger) (*StandaloneExporter, error) {
 	be := NewBaseExporter(logger)
 	return &StandaloneExporter{
 		ExaBGPCLI:    exabgpcli,
@@ -51,7 +50,7 @@ func (e *StandaloneExporter) Collect(ch chan<- prometheus.Metric) {
 	e.BaseExporter.totalScrapes.Inc()
 	ribs, peers, err := e.scrape(ch)
 	if err != nil {
-		level.Error(e.BaseExporter.logger).Log("err", err) // nolint:errcheck
+		e.BaseExporter.logger.Error("error scraping exabgp", "error", err.Error())
 	} else {
 		for _, u := range peers {
 			desc := newSummaryMetric("peer")
@@ -103,11 +102,10 @@ func (e *StandaloneExporter) Collect(ch chan<- prometheus.Metric) {
 				)
 				ch <- m
 			default:
-				// nolint:errcheck
-				level.Error(e.BaseExporter.logger).Log(
-					"msg", "unable to handle family",
+				e.BaseExporter.logger.Error(
+					"unable to handle family",
 					"family", r.Family(),
-					"err", err,
+					"error", err.Error(),
 				)
 			}
 		}

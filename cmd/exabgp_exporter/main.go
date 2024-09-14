@@ -8,12 +8,11 @@ import (
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/gizmoguy/exabgp_exporter/pkg/exporter"
 
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	versioncollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/common/promlog/flag"
+	"github.com/prometheus/common/promslog"
+	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/common/version"
 )
 
@@ -33,44 +32,42 @@ func main() {
 		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
 	)
 
-	promlogConfig := &promlog.Config{}
+	logConfig := &promslog.Config{}
 
-	flag.AddFlags(kingpin.CommandLine, promlogConfig)
+	flag.AddFlags(kingpin.CommandLine, logConfig)
 	kingpin.Version(version.Print("exabgp_exporter"))
 	kingpin.HelpFlag.Short('h')
 	exporterMode := kingpin.Parse()
 
-	logger := promlog.New(promlogConfig)
+	logger := promslog.New(logConfig)
 
 	switch exporterMode {
 	case "standalone":
-		// nolint:errcheck
-		level.Info(logger).Log(
-			"msg", "Starting exabgp_exporter",
+		logger.Info(
+			"Starting exabgp_exporter",
 			"version", version.Info(),
 			"mode", "standalone",
 			"args", *exabgpcmd,
 			"root", *exabgproot,
+			"buildcontext", version.BuildContext(),
 		)
-		level.Info(logger).Log("buildcontext", version.BuildContext()) // nolint:errcheck
 		e, err := exporter.NewStandaloneExporter(*exabgpcmd, *exabgproot, logger)
 		if err != nil {
-			level.Error(logger).Log("err", err) // nolint:errcheck
+			logger.Error("Error creating standalone exporter", "error", err.Error())
 			os.Exit(1)
 		}
 		prometheus.MustRegister(e)
 		prometheus.MustRegister(versioncollector.NewCollector("exabgp_exporter"))
 	case "stream":
-		// nolint:errcheck
-		level.Info(logger).Log(
-			"msg", "Starting exabgp_exporter",
+		logger.Info(
+			"Starting exabgp_exporter",
 			"version", version.Info(),
 			"mode", "stream",
+			"buildcontext", version.BuildContext(),
 		)
-		level.Info(logger).Log("buildcontext", version.BuildContext()) // nolint:errcheck
 		e, err := exporter.NewEmbeddedExporter(logger)
 		if err != nil {
-			level.Error(logger).Log("err", err) // nolint:errcheck
+			logger.Error("Error creating embedded exporter", "error", err.Error())
 			os.Exit(1)
 		}
 		prometheus.MustRegister(e)
@@ -78,7 +75,7 @@ func main() {
 		reader := bufio.NewReader(os.Stdin)
 		e.Run(reader)
 	}
-	level.Info(logger).Log("msg", "Listening on", "address", *listenAddress) // nolint:errcheck
+	logger.Info("Listening on", "address", *listenAddress)
 	http.Handle(*metricsPath, promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`<html>
@@ -90,7 +87,7 @@ func main() {
              </html>`))
 	})
 	if err := http.ListenAndServe(*listenAddress, nil); err != nil {
-		level.Error(logger).Log("err", err) // nolint:errcheck
+		logger.Error("Error starting HTTP server", "error", err.Error())
 		os.Exit(1)
 	}
 }
