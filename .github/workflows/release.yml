@@ -23,10 +23,6 @@ jobs:
           go-version-file: "go.mod"
           check-latest: true
 
-      - name: Set build date
-        run: |
-          echo "BUILD_DATE=$(date)" >> ${GITHUB_ENV}
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
