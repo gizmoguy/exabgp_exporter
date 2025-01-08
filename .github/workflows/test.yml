@@ -56,6 +56,8 @@ jobs:
       - name: Govulncheck
         uses: golang/govulncheck-action@v1
         with:
+          go-version-input: ""
+          check-latest: true
           go-version-file: "go.mod"
           cache: false
           repo-checkout: false
