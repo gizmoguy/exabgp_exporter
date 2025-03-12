@@ -1,6 +1,6 @@
 module github.com/gizmoguy/exabgp_exporter
 
-go 1.23
+go 1.24
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
@@ -21,7 +21,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
