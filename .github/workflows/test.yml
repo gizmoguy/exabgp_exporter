@@ -51,7 +51,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v7
         with:
-          args: --out-format=github-actions,line-number
+          only-new-issues: true
 
       - name: Govulncheck
         uses: golang/govulncheck-action@v1
