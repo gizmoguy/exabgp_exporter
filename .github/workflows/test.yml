@@ -30,7 +30,7 @@ jobs:
           args: release --clean --skip=publish --snapshot
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: exabgp_exporter
           path: dist/
@@ -91,7 +91,7 @@ jobs:
       - name: Coverage
         run: script/coverage
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: "unit-test-results"
           path: "/tmp/test-results"
@@ -138,7 +138,7 @@ jobs:
       - name: Stop docker container
         run: script/stop-docker
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: "exabgp-${{ matrix.exabgp_version }}-test-results"
           path: "/tmp/test-results"
