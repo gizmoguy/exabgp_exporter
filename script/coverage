@@ -1,7 +1,4 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-CI=${CI:-''}
-[ -n "$CI" ] && go install github.com/axw/gocov/gocov@latest
-
-gocov test ./cmd/... ./pkg/... | gocov report
+go tool cover -func="${TEST_RESULTS}/cover.out"
