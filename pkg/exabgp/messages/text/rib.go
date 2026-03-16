@@ -27,6 +27,40 @@ var rxParseAttributeExtendedCommunity = `(?:^|\s+)extended-community (?P<extende
 var rxParseAttributeOriginatorID = `(?:^|\s+)originator-id (?P<originatorid>\S+)`
 var rxParseAttributeLocalPref = `(?:^|\s+)local-preference (?P<localpreference>\d+)`
 
+// ParseError contains details about a failed text parser match.
+type ParseError struct {
+	Parser string
+	Input  string
+	Line   int
+}
+
+func (e *ParseError) Error() string {
+	location := ""
+	if e.Line > 0 {
+		location = fmt.Sprintf(" at line %d", e.Line)
+	}
+
+	return fmt.Sprintf("%s: unable to parse input%s: %q", e.Parser, location, e.Input)
+}
+
+func newParseError(parser string, input string) *ParseError {
+	return &ParseError{
+		Parser: parser,
+		Input:  input,
+	}
+}
+
+func withParseErrorLine(err error, line int) error {
+	parseErr, ok := err.(*ParseError)
+	if !ok {
+		return err
+	}
+
+	copy := *parseErr
+	copy.Line = line
+	return &copy
+}
+
 func parseAttributes(a string) Attribute {
 	var attribute Attribute
 
@@ -116,7 +150,7 @@ func parseUnicastLine(s string) (map[string]string, error) {
 	re := regexp.MustCompile(rxParseUnicast)
 	matches := re.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return md, fmt.Errorf("unable to parse line")
+		return md, newParseError("unicast parser", s)
 	}
 	keys := re.SubexpNames()
 	if len(keys) != 0 {
@@ -134,7 +168,7 @@ func parseRIBLine(s string) (map[string]string, error) {
 	re := regexp.MustCompile(rxParseRIBLine)
 	matches := re.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return md, fmt.Errorf("unable to parse line")
+		return md, newParseError("rib parser", s)
 	}
 	keys := re.SubexpNames()
 	if len(keys) != 0 {
@@ -151,14 +185,16 @@ func parseRIBLine(s string) (map[string]string, error) {
 func RibFromBytes(b []byte) ([]*RIBMessage, error) {
 	var ribs []*RIBMessage
 	reader := bufio.NewReader(bytes.NewReader(b))
+	lineNo := 0
 	for {
 		l, _, err := reader.ReadLine()
 		if err == io.EOF {
 			break
 		}
+		lineNo++
 		r, err := RibEntryFromString(string(l))
 		if err != nil {
-			return ribs, err
+			return ribs, withParseErrorLine(err, lineNo)
 		}
 		ribs = append(ribs, r)
 	}

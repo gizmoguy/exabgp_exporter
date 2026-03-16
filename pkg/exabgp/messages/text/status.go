@@ -3,7 +3,6 @@ package text
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -22,7 +21,7 @@ func parseSummaryLine(s string) (map[string]string, error) {
 	re := regexp.MustCompile(rxSummary)
 	matches := re.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return md, fmt.Errorf("unable to parse line")
+		return md, newParseError("summary parser", s)
 	}
 	keys := re.SubexpNames()
 	if len(keys) != 0 {
@@ -62,15 +61,17 @@ func SummaryEntryFromString(s string) (*NeighborSummary, error) {
 func SummariesFromBytes(b []byte) ([]*NeighborSummary, error) {
 	var sums []*NeighborSummary
 	reader := bufio.NewReader(bytes.NewReader(b))
+	lineNo := 0
 	for {
 		l, _, err := reader.ReadLine()
 		if err == io.EOF {
 			break
 		}
+		lineNo++
 		if string(l) != summaryHeaderLine {
 			r, err := SummaryEntryFromString(string(l))
 			if err != nil {
-				return sums, err
+				return sums, withParseErrorLine(err, lineNo)
 			}
 			sums = append(sums, r)
 		}

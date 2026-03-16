@@ -105,7 +105,6 @@ func (e *StandaloneExporter) Collect(ch chan<- prometheus.Metric) {
 				e.BaseExporter.logger.Error(
 					"unable to handle family",
 					"family", r.Family(),
-					"error", err.Error(),
 				)
 			}
 		}
@@ -139,10 +138,12 @@ func (e *StandaloneExporter) scrape(ch chan<- prometheus.Metric) ([]*text.RIBMes
 	}
 	ribs, ribserr := text.RibFromBytes(ribres)
 	if ribserr != nil {
+		e.BaseExporter.parseFailures.Inc()
 		return rs, ns, ribserr
 	}
 	return ribs, status, nil
 }
+
 func (e *StandaloneExporter) getSummary() ([]byte, error) {
 	return e.runExaBGPCLI(showSummarySubcommand)
 }
