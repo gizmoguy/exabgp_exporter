@@ -3,4 +3,10 @@ set -Eeuo pipefail
 # shellcheck disable=SC1091
 source script/env
 
-docker build --rm -t exabgp_exporter .
+build_args=()
+
+if [ -n "${PYTHON_VERSION:-}" ]; then
+    build_args+=("--build-arg PYTHON_VERSION=${PYTHON_VERSION}")
+fi
+
+docker build --rm ${build_args[@]} -t exabgp_exporter .
