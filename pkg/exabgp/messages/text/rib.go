@@ -3,6 +3,7 @@ package text
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -116,7 +117,7 @@ func parseUnicastLine(s string) (map[string]string, error) {
 	re := regexp.MustCompile(rxParseUnicast)
 	matches := re.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return md, fmt.Errorf("unable to parse line")
+		return md, newParseError("unicast parser", s)
 	}
 	keys := re.SubexpNames()
 	if len(keys) != 0 {
@@ -134,7 +135,7 @@ func parseRIBLine(s string) (map[string]string, error) {
 	re := regexp.MustCompile(rxParseRIBLine)
 	matches := re.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return md, fmt.Errorf("unable to parse line")
+		return md, newParseError("rib parser", s)
 	}
 	keys := re.SubexpNames()
 	if len(keys) != 0 {
@@ -151,13 +152,19 @@ func parseRIBLine(s string) (map[string]string, error) {
 func RibFromBytes(b []byte) ([]*RIBMessage, error) {
 	var ribs []*RIBMessage
 	reader := bufio.NewReader(bytes.NewReader(b))
+	lineNo := 0
 	for {
 		l, _, err := reader.ReadLine()
 		if err == io.EOF {
 			break
 		}
+		lineNo++
 		r, err := RibEntryFromString(string(l))
 		if err != nil {
+			var parseErr *ParseError
+			if errors.As(err, &parseErr) {
+				return ribs, parseErr.WithLineNumber(lineNo)
+			}
 			return ribs, err
 		}
 		ribs = append(ribs, r)

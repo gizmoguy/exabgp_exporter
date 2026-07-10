@@ -2,8 +2,10 @@ package text
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,8 +15,9 @@ var testRibDataFile = filepath.Join("testdata", "rib-out.txt")
 
 func testGetTotalLinesInFile(t *testing.T, f string) int {
 	file, err := os.Open(f)
-	// nolint:errcheck,staticcheck
-	defer file.Close()
+	defer func() {
+		require.NoError(t, file.Close())
+	}()
 
 	require.NoError(t, err)
 
@@ -158,4 +161,49 @@ func TestParseIPv6UnicastNoAttributes(t *testing.T) {
 	require.Equal(t, "2001:db8:1000::/64", ipv6.NLRI)
 	require.Equal(t, "self", ipv6.NextHop)
 	require.Empty(t, ipv6.Attributes)
+}
+
+func TestRibEntryFromStringReturnsDetailedParseError(t *testing.T) {
+	_, err := RibEntryFromString("neighbor 127.0.0.1 broken")
+	require.Error(t, err)
+
+	var parseErr *ParseError
+	require.True(t, errors.As(err, &parseErr))
+	require.Equal(t, "rib parser", parseErr.Parser)
+	require.Equal(t, "neighbor 127.0.0.1 broken", parseErr.Input)
+	require.Zero(t, parseErr.Line)
+	require.Equal(t, "rib parser: unable to parse input: \"neighbor 127.0.0.1 broken\"", err.Error())
+}
+
+func TestRibFromBytesReturnsLineNumberInParseError(t *testing.T) {
+	data := strings.Join([]string{
+		"neighbor 127.0.0.1 local-ip 127.0.0.1 local-as 64496 peer-as 64496 router-id 1.1.1.1 family-allowed in-open ipv4 unicast 192.168.88.248/29 next-hop self",
+		"neighbor 127.0.0.1 broken",
+	}, "\n")
+
+	_, err := RibFromBytes([]byte(data))
+	require.Error(t, err)
+
+	var parseErr *ParseError
+	require.True(t, errors.As(err, &parseErr))
+	require.Equal(t, 2, parseErr.Line)
+	require.Contains(t, err.Error(), "at line 2")
+	require.Contains(t, err.Error(), "neighbor 127.0.0.1 broken")
+}
+
+func TestIPv4UnicastReturnsDetailedParseError(t *testing.T) {
+	m := &RIBMessage{
+		AFI:     "ipv4",
+		SAFI:    "unicast",
+		Details: "192.168.88.248/29 via self",
+	}
+
+	_, err := m.IPv4Unicast()
+	require.Error(t, err)
+
+	var parseErr *ParseError
+	require.True(t, errors.As(err, &parseErr))
+	require.Equal(t, "unicast parser", parseErr.Parser)
+	require.Equal(t, "192.168.88.248/29 via self", parseErr.Input)
+	require.Equal(t, "unicast parser: unable to parse input: \"192.168.88.248/29 via self\"", err.Error())
 }
