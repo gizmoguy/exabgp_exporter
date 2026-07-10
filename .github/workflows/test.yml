@@ -97,20 +97,26 @@ jobs:
           path: "/tmp/test-results"
 
   integration-tests:
-    name: Integration tests
+    name: Integration tests (${{ matrix.exabgp.version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        exabgp_version:
-          - "4.2.25"
-          - "4.2.22"
-          - "4.2.21"
-          - "4.2.17"
-          - "4.2.8"
-          - "4.2.4"
-          - "4.0.8"
+        exabgp:
+          - version: "4.2.25"
+          - version: "4.2.22"
+          - version: "4.2.21"
+            python: "3.11"
+          - version: "4.2.17"
+            python: "3.11"
+          - version: "4.2.8"
+            python: "3.11"
+          - version: "4.2.4"
+            python: "3.11"
+          - version: "4.0.8"
+            python: "3.11"
     env:
-      EXABGP_VERSION: ${{ matrix.exabgp_version }}
+      EXABGP_VERSION: ${{ matrix.exabgp.version }}
+      PYTHON_VERSION: ${{ matrix.exabgp.python }}
       TEST_RESULTS: "/tmp/test-results"
     steps:
       - name: Checkout repo
@@ -140,5 +146,5 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: "exabgp-${{ matrix.exabgp_version }}-test-results"
+          name: "exabgp-${{ matrix.exabgp.version }}-test-results"
           path: "/tmp/test-results"
