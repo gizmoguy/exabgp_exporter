@@ -82,7 +82,7 @@ func (e *EmbeddedExporter) Run(reader *bufio.Reader) {
 					labels["local_asn"] = fmt.Sprintf("%d", evt.Self.ASN)
 					for _, v := range announcements.IPV4Unicast {
 						labels["communities"] = communityToString(v.Attributes.Community)
-						labels["as_path"] = asPathToString(v.Attributes.ASPath)
+						labels["as_path"] = v.Attributes.asPathToString(evt.GetVersion())
 						labels["local_preference"] = strconv.Itoa(v.Attributes.LocalPreference)
 						labels["med"] = strconv.Itoa(int(v.Attributes.Med))
 						labels["family"] = "ipv4 unicast"
@@ -93,7 +93,7 @@ func (e *EmbeddedExporter) Run(reader *bufio.Reader) {
 					}
 					for _, v := range announcements.IPV6Unicast {
 						labels["communities"] = communityToString(v.Attributes.Community)
-						labels["as_path"] = asPathToString(v.Attributes.ASPath)
+						labels["as_path"] = v.Attributes.asPathToString(evt.GetVersion())
 						labels["local_preference"] = strconv.Itoa(v.Attributes.LocalPreference)
 						labels["med"] = strconv.Itoa(int(v.Attributes.Med))
 						labels["family"] = "ipv6 unicast"
@@ -109,7 +109,7 @@ func (e *EmbeddedExporter) Run(reader *bufio.Reader) {
 					labels["local_asn"] = fmt.Sprintf("%d", evt.Self.ASN)
 					for _, w := range withdraws.IPv4Unicast {
 						labels["communities"] = communityToString(w.Attributes.Community)
-						labels["as_path"] = asPathToString(w.Attributes.ASPath)
+						labels["as_path"] = w.Attributes.asPathToString(evt.GetVersion())
 						labels["local_preference"] = strconv.Itoa(w.Attributes.LocalPreference)
 						labels["med"] = strconv.Itoa(int(w.Attributes.Med))
 						for _, r := range w.NLRI {
@@ -120,7 +120,7 @@ func (e *EmbeddedExporter) Run(reader *bufio.Reader) {
 					}
 					for _, w := range withdraws.IPv6Unicast {
 						labels["communities"] = communityToString(w.Attributes.Community)
-						labels["as_path"] = asPathToString(w.Attributes.ASPath)
+						labels["as_path"] = w.Attributes.asPathToString(evt.GetVersion())
 						labels["local_preference"] = strconv.Itoa(w.Attributes.LocalPreference)
 						labels["med"] = strconv.Itoa(int(w.Attributes.Med))
 						for _, r := range w.NLRI {
@@ -164,12 +164,53 @@ func communityToString(communityAttribute [][]int) string {
 	return strings.Join(communityStrings, " ")
 }
 
-// Transform ASPath to string
-func asPathToString(asPathAttribute []int) string {
-	asPathStrings := []string{}
-	for _, communityAS := range asPathAttribute {
-		asPathStrings = append(asPathStrings, strconv.Itoa(communityAS))
-	}
+// asPathToString renders the AS path as a space-separated list of AS numbers.
+//
+// exabgp changed the JSON representation of as-path in 5.0.0: earlier versions
+// emit a flat array (e.g. [30740, 30740]) while 5.0.0+ emit an index-keyed
+// object of typed segments (e.g. {"0": {"element": "as-sequence", "value":
+// [30740]}}). The version string (from Event.GetVersion) selects which shape to
+// decode.
+func (a Attribute) asPathToString(version string) string {
+        if len(a.ASPath) == 0 {
+                return ""
+        }
+        var asns []int
+        if asPathSegmented(version) {
+                var segments map[string]ASPathSegment
+                if err := json.Unmarshal(a.ASPath, &segments); err != nil {
+                        return ""
+                }
+                keys := make([]int, 0, len(segments))
+                idx := make(map[int]string, len(segments))
+                for k := range segments {
+                        n, err := strconv.Atoi(k)
+                        if err != nil {
+                                continue
+                        }
+                        keys = append(keys, n)
+                        idx[n] = k
+                }
+                sort.Ints(keys)
+                for _, n := range keys {
+                        asns = append(asns, segments[idx[n]].Value...)
+                }
+        } else {
+                if err := json.Unmarshal(a.ASPath, &asns); err != nil {
+                        return ""
+                }
+        }
+        parts := make([]string, 0, len(asns))
+        for _, asn := range asns {
+                parts = append(parts, strconv.Itoa(asn))
+        }
+        return strings.Join(parts, " ")
+}
 
-	return strings.Join(asPathStrings, " ")
+// asPathSegmented reports whether the given exabgp version emits the typed
+// as-path segment object (5.0.0+) rather than the legacy flat array.
+func asPathSegmented(version string) bool {
+        major, _, _ := strings.Cut(version, ".")
+        n, _ := strconv.Atoi(major)
+        return n >= 5
 }

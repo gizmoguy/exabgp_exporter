@@ -251,7 +251,6 @@ func TestPeerError(t *testing.T) {
 	tc := map[string]string{
 		"Unsupported Capability":    `{ "exabgp": "4.0.1", "time": 1555087685.177178, "host" : "node1", "pid" : 21053, "ppid" : 1, "counter": 3, "type": "state", "neighbor": { "address": { "local": "192.168.1.184", "peer": "192.168.1.2" }, "asn": { "local": 64496, "peer": 64496 } , "state": "down", "reason": "peer reset, message (notification received (2,7)) error(OPEN message error / Unsupported Capability / )" } }`,
 		"TCP connection was closed": `{ "exabgp": "4.0.1", "time": 1555087685.2088819, "host" : "node1", "pid" : 21053, "ppid" : 1, "counter": 5, "type": "state", "neighbor": { "address": { "local": "192.168.1.184", "peer": "192.168.1.2" }, "asn": { "local": 64496, "peer": 64496 } , "state": "down", "reason": "peer reset, message (closing connection) error(the TCP connection was closed by the remote end)" } }`,
-
 	}
 	for name, test := range tc {
 		t.Run(name, func(t *testing.T) {
@@ -285,7 +284,6 @@ func TestIPv6PeerError(t *testing.T) {
 	tc := map[string]string{
 		"Unsupported Capability":    `{ "exabgp": "4.0.1", "time": 1555087685.177178, "host" : "node1", "pid" : 21053, "ppid" : 1, "counter": 3, "type": "state", "neighbor": { "address": { "local": "2001::1", "peer": "2001::2" }, "asn": { "local": 64496, "peer": 64496 } , "state": "down", "reason": "peer reset, message (notification received (2,7)) error(OPEN message error / Unsupported Capability / )" } }`,
 		"TCP connection was closed": `{ "exabgp": "4.0.1", "time": 1555087685.2088819, "host" : "node1", "pid" : 21053, "ppid" : 1, "counter": 5, "type": "state", "neighbor": { "address": { "local": "2001::1", "peer": "2001::2" }, "asn": { "local": 64496, "peer": 64496 } , "state": "down", "reason": "peer reset, message (closing connection) error(the TCP connection was closed by the remote end)" } }`,
-
 	}
 	for name, test := range tc {
 		t.Run(name, func(t *testing.T) {

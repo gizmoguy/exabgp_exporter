@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -195,11 +197,18 @@ type Attribute struct {
 		Value  json.Number `json:"value"`
 		String string      `json:"string"`
 	} `json:"extended-community"`
-	Community         [][]int  `json:"community"`
-	ASPath            []int    `json:"as-path"`
-	ConfederationPath []int    `json:"confederation-path"`
-	OriginatorID      string   `json:"originator-id"`
-	LocalPreference   int      `json:"local-preference"`
-	Origin            string   `json:"origin"`
-	ClusterList       []string `json:"cluster-list"`
+	Community         [][]int         `json:"community"`
+	ASPath            json.RawMessage `json:"as-path"`
+	ConfederationPath []int           `json:"confederation-path"`
+	OriginatorID      string          `json:"originator-id"`
+	LocalPreference   int             `json:"local-preference"`
+	Origin            string          `json:"origin"`
+	ClusterList       []string        `json:"cluster-list"`
+}
+
+// ASPathSegment represents one element of a BGP AS path as emitted by exabgp
+// 5.0.0+, e.g. { "element": "as-sequence", "value": [64542] }.
+type ASPathSegment struct {
+	Element string `json:"element"`
+	Value   []int  `json:"value"`
 }
