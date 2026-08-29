@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
 	"strconv"
 	"time"
 )
@@ -31,6 +33,33 @@ func (e *Timestamp) UnmarshalJSON(data []byte) error {
 	}
 	*e = timestampFromFloat64(ts)
 	return nil
+}
+
+type ASPath []int
+
+type ASPathSegment struct {
+	Element string `json:"element"`
+	Value   []int  `json:"value"`
+}
+
+// UnmarshalJSON converts exabgp v4/v5 as-path format to golang []int
+func (a *ASPath) UnmarshalJSON(data []byte) error {
+	asPath := []int{}
+	if err := json.Unmarshal(data, &asPath); err == nil {
+		*a = asPath
+		return nil
+	}
+
+	asPathSegments := map[int]ASPathSegment{}
+	if err := json.Unmarshal(data, &asPathSegments); err == nil {
+		for _, k := range slices.Sorted(maps.Keys(asPathSegments)) {
+			asPath = append(asPath, asPathSegments[k].Value...)
+		}
+		*a = asPath
+		return nil
+	}
+
+	return fmt.Errorf("unable to parse AS path: %s", string(data))
 }
 
 // JSONEvent represents a message as JSON
@@ -196,7 +225,7 @@ type Attribute struct {
 		String string      `json:"string"`
 	} `json:"extended-community"`
 	Community         [][]int  `json:"community"`
-	ASPath            []int    `json:"as-path"`
+	ASPath            ASPath   `json:"as-path"`
 	ConfederationPath []int    `json:"confederation-path"`
 	OriginatorID      string   `json:"originator-id"`
 	LocalPreference   int      `json:"local-preference"`
