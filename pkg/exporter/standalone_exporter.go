@@ -153,12 +153,26 @@ func (e *StandaloneExporter) getRIB() ([]byte, error) {
 }
 
 func (e *StandaloneExporter) runExaBGPCLI(subcommand []string) ([]byte, error) {
-	args := []string{"--root", e.ExaBGPRoot}
+	args := []string{}
+	env := []string{}
+	if strings.HasSuffix(e.ExaBGPCLI, "exabgp-cli") {
+		// ExaBGP >= v5
+		env = append(env, "EXABGP_ROOT="+e.ExaBGPRoot)
+	} else {
+		args = append(args, "--root", e.ExaBGPRoot)
+	}
 	args = append(args, subcommand...)
 	cmd := exec.Command(e.ExaBGPCLI, args...)
+	cmd.Env = append(cmd.Environ(), env...)
 	var se, so bytes.Buffer
 	cmd.Stderr = &se
 	cmd.Stdout = &so
 	err := cmd.Run()
+	if bytes.HasPrefix(so.Bytes(), []byte("command:")) {
+		if idx := bytes.IndexByte(so.Bytes(), '\n'); idx > 0 {
+			// For ExaBGP >= v5 we need to skip the first line of output
+			return so.Bytes()[idx+1:], err
+		}
+	}
 	return so.Bytes(), err
 }

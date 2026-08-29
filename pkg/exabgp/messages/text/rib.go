@@ -19,7 +19,7 @@ var rxParseUnicast = `^(?P<nlri>\S+) next-hop (?P<next_hop>\S+)(| (?P<attributes
 // regexp for parsing attributes
 var rxParseAttributeMed = `(?:^|\s+)med (?P<med>\d+)`
 var rxParseAttributeOrigin = `(?:^|\s+)origin (?P<origin>\S+)`
-var rxParseAttributeASPath = `(?:^|\s+)as-path \[ (?P<aspath>[^\]]+) \]`
+var rxParseAttributeASPath = `(?:^|\s+)as-path (?:\[|\() (?P<aspath>[^\]]+) (?:\]|\))`
 var rxParseAttributeClusterList = `(?:^|\s+)cluster-list \[ (?P<clusterlist>[^\]]+) \]`
 var rxParseAttributeCommunities = `(?:^|\s+)community \[ (?P<communities>[^\]]+) \]`
 var rxParseAttributeCommunity = `(?:^|\s+)community (?P<community>\S+)`
