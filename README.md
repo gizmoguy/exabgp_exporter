@@ -2,6 +2,7 @@
 
 This is a prometheus exporter for exabgp. It currently works with the following exabgp versions (tested as part of CI):
 
+- 5.0.13
 - 4.2.25
 - 4.2.22
 - 4.2.21
