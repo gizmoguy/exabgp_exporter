@@ -18,7 +18,7 @@ if [ "${test_state}" == "withdrawn" ]; then
         | tee /exabgp/exabgp.cmd
 
     # announce single ipv4 route with as-path, community, localpref and MED
-    echo "neighbor 127.0.0.1 announce route 10.0.0.0/24 next-hop 192.168.1.2 as-path 65001 community 65001:1234 local-preference 100 med 200" \
+    echo "neighbor 127.0.0.1 announce route 10.0.0.0/24 next-hop 192.168.1.2 as-path [ 65001 ] community [ 65001:1234 ] local-preference 100 med 200" \
         | tee /exabgp/exabgp.cmd
 
     # announce single ipv4 route with multiple as-paths and communities
@@ -30,7 +30,7 @@ if [ "${test_state}" == "withdrawn" ]; then
         | tee /exabgp/exabgp.cmd
 
     # announce single ipv6 route with as-path, community, localpref and MED
-    echo "neighbor 127.0.0.1 announce route 2001:db8:2000::/64 next-hop 2001:db8:ffff::1 as-path 65001 community 65001:1234 local-preference 100 med 200" \
+    echo "neighbor 127.0.0.1 announce route 2001:db8:2000::/64 next-hop 2001:db8:ffff::1 as-path [ 65001 ] community [ 65001:1234 ] local-preference 100 med 200" \
         | tee /exabgp/exabgp.cmd
 
     # announce single ipv6 route with multiple as-pathes and communities
